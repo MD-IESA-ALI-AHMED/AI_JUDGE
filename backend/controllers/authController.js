@@ -8,56 +8,77 @@ exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body
     if (!username || !email || !password) {
-      req.flash('error', 'All fields are required')
-      return res.status(400).json({ ok: false, error: 'Missing fields' })
+      return res.status(400).json({ 
+        message: 'Please provide username, email, and password'
+      })
     }
 
     const existing = await User.findOne({ $or: [{ username }, { email }] })
     if (existing) {
-      req.flash('error', 'Username or email already taken')
-      return res.status(409).json({ ok: false, error: 'User exists' })
+      return res.status(409).json({ 
+        message: 'Username or email is already taken'
+      })
     }
 
     const passwordHash = await bcrypt.hash(password, 10)
     const user = new User({ username, email, passwordHash })
     await user.save()
 
-    req.flash('success', 'Registration successful')
     const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' })
-    res.status(201).json({ ok: true, user: { id: user._id, username: user.username, email: user.email }, token })
+    res.status(201).json({
+      user: { id: user._id, username: user.username, email: user.email },
+      token
+    })
   } catch (err) {
     console.error(err)
-    req.flash('error', 'Server error')
-    res.status(500).json({ ok: false, error: 'Server error' })
+    res.status(500).json({ message: 'Internal server error' })
   }
 }
 
 exports.login = async (req, res) => {
   try {
-    const { usernameOrEmail, password } = req.body
-    if (!usernameOrEmail || !password) {
-      req.flash('error', 'All fields are required')
-      return res.status(400).json({ ok: false, error: 'Missing fields' })
+    const { email, password } = req.body
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Please provide email and password'
+      })
     }
 
-    const user = await User.findOne({ $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }] })
+    const user = await User.findOne({ email })
     if (!user) {
-      req.flash('error', 'Invalid credentials')
-      return res.status(401).json({ ok: false, error: 'Invalid credentials' })
+      return res.status(401).json({ 
+        message: 'Invalid email or password'
+      })
     }
 
     const match = await bcrypt.compare(password, user.passwordHash)
     if (!match) {
-      req.flash('error', 'Invalid credentials')
-      return res.status(401).json({ ok: false, error: 'Invalid credentials' })
+      return res.status(401).json({ 
+        message: 'Invalid email or password'
+      })
     }
 
     const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' })
-    req.flash('success', 'Logged in')
-    res.json({ ok: true, user: { id: user._id, username: user.username, email: user.email }, token })
+    res.json({
+      user: { id: user._id, username: user.username, email: user.email },
+      token
+    })
   } catch (err) {
     console.error(err)
-    req.flash('error', 'Server error')
-    res.status(500).json({ ok: false, error: 'Server error' })
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// Get current user information
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-passwordHash')
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    res.json(user)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Internal server error' })
   }
 }

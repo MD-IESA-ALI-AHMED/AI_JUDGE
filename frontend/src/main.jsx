@@ -1,21 +1,44 @@
-import React from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
-import App from './App'
-import Problems from './pages/Problems'
-import Problem from './pages/Problem'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
+import React from 'react';
+import './index.css';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import App from './App';
+import Dashboard from './pages/Dashboard';
+import NewDebate from './pages/NewDebate';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import { auth } from './api/api';
+
+// Protected Route component
+const ProtectedRoute = ({ children }) => {
+  const token = auth.getToken();
+  if (!token) {
+    return <Navigate to="/login" />;
+  }
+  return children;
+};
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<App /> }>
-          <Route index element={<Problems />} />
-          <Route path="problems/:id" element={<Problem />} />
+        <Route path="/" element={<App />}>
+          {/* Public Routes */}
+          <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="login" element={<Login />} />
-          <Route path="signup" element={<Signup />} />
+          <Route path="register" element={<Signup />} />
+
+          {/* Protected Routes */}
+          <Route path="dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="new-debate" element={
+            <ProtectedRoute>
+              <NewDebate />
+            </ProtectedRoute>
+          } />
         </Route>
       </Routes>
     </BrowserRouter>
