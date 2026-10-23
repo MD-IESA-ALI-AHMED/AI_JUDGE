@@ -158,15 +158,8 @@ print(response)
 ## Repository Structure
 
 ```text
-├── notebooks/
-│   └── Fine_Tuning.ipynb        # Interactive training and evaluation notebook
-├── src/
-│   ├── config.py                # Hyperparameters, LoRA parameters, and paths
-│   ├── dataset.py               # Dataset ingestion and prompt-formatting utilities
-│   ├── train.py                 # Standalone training script
-│   └── inference.py             # Inference and benchmarking routines
+│── Fine_Tuning.ipynb        # Interactive training and evaluation notebook
 ├── README.md                    # Technical documentation
-└── requirements.txt             # Pinned package dependencies
 ```
 
 ## License and Attribution
